@@ -48,6 +48,22 @@ async function main() {
     version: "1.4.1",
   });
 
+  console.log("Safe account address:", account.address);
+
+  // Check if account is deployed via both local RPC and bundler
+  const code = await publicClient.getCode({ address: account.address });
+  const isDeployed = code && code !== '0x';
+  console.log("Account deployed (local RPC):", isDeployed);
+  
+  // Also check via bundler to see if it agrees
+  try {
+    const bundlerCode = await bundlerClient.getCode({ address: account.address });
+    const isBundlerDeployed = bundlerCode && bundlerCode !== '0x';
+    console.log("Account deployed (bundler RPC):", isBundlerDeployed);
+  } catch (e) {
+    console.log("Bundler RPC doesn't support getCode, assuming different state");
+  }
+
   const bundlerClient = createBundlerClient({
     client: publicClient,
     transport: http(
@@ -55,24 +71,30 @@ async function main() {
     ),
   });
 
+  // Use a different target contract that doesn't have isGelatoRelay restriction
+  // Option 1: Use a simple transfer (send 0 ETH to yourself)
   const userOperation = await bundlerClient.prepareUserOperation({
     account,
     calls: [
       {
-        to: "0x....", // Counter contract on Polygon (needs to be deployed)
-        data: "0xd09de08a", // increment() function selector
+        to: account.address, // Send to yourself
+        value: BigInt(0), // 0 ETH
+        data: "0x", // Empty data
       },
     ],
     maxFeePerGas: BigInt(0),
     maxPriorityFeePerGas: BigInt(0),
   });
-  //console.log("UserOperation prepared:", userOperation);
 
+  console.log("UserOperation prepared:");
+  console.log("- Factory:", userOperation.factory);
+  console.log("- FactoryData:", userOperation.factoryData);
+  console.log("- Sender:", userOperation.sender);
+
+  // Ensure factory and factoryData are properly set for undeployed accounts
   let sponsoredUserOperation: UserOperation = {
     sender: userOperation.sender,
     nonce: userOperation.nonce,
-    factory: userOperation.factory as `0x${string}`,
-    factoryData: userOperation.factoryData as `0x${string}`,
     callData: userOperation.callData,
     callGasLimit: userOperation.callGasLimit,
     verificationGasLimit: userOperation.verificationGasLimit,
@@ -82,13 +104,28 @@ async function main() {
     signature: userOperation.signature,
     paymasterAndData: "0x" as `0x${string}`, // Zero for 1Balance
   };
-  //console.log("Initial UserOperation values set for v0.7 gas estimation");
 
-  // Sign the UserOperation first with reasonable gas estimates
-  //console.log("Signing UserOperation for gas estimation...");
-  //console.log("UserOperation signed with temporary gas values.");
+  // Handle factory/factoryData based on deployment status
+  if (!isDeployed) {
+    // Account not deployed - factory data is required
+    if (userOperation.factory && userOperation.factoryData) {
+      sponsoredUserOperation.factory = userOperation.factory as `0x${string}`;
+      sponsoredUserOperation.factoryData = userOperation.factoryData as `0x${string}`;
+      console.log("Added deployment data for undeployed account");
+      console.log("- Factory:", sponsoredUserOperation.factory);
+      console.log("- FactoryData length:", sponsoredUserOperation.factoryData?.length);
+    } else {
+      console.error("Account not deployed and no factory data available!");
+      console.log("UserOperation keys:", Object.keys(userOperation));
+      throw new Error("Cannot proceed without factory data for account deployment");
+    }
+  } else {
+    // Account already deployed - factory data not needed
+    console.log("✅ Account already deployed, factory data not required");
+    // Don't include factory/factoryData for deployed accounts
+  }
 
-  //console.log("Getting gas estimation with real signature...");
+  console.log("Getting gas estimation with deployment data...");
   const rvGas = await getGasValuesFromGelato(
     entryPointAddress,
     sponsoredUserOperation,
@@ -115,15 +152,10 @@ export const getGasValuesFromGelato = async (
   let userOpForEstimation: any
 
   if (version === 'v0.7') {
-    // v0.7 format - same as sendTxn script
+    // v0.7 format - ensure factory/factoryData are included if present
     userOpForEstimation = {
       sender: sponsoredUserOperation.sender,
       nonce: "0x" + sponsoredUserOperation.nonce.toString(16),
-      // Only include factory/factoryData if they exist (account not deployed yet)
-      ...(sponsoredUserOperation.factory && sponsoredUserOperation.factory !== "0x" ? {
-        factory: sponsoredUserOperation.factory,
-        factoryData: sponsoredUserOperation.factoryData || "0x",
-      } : {}),
       callData: sponsoredUserOperation.callData,
       maxFeePerGas: `0x${sponsoredUserOperation.maxFeePerGas.toString(16)}`,
       maxPriorityFeePerGas: `0x${sponsoredUserOperation.maxPriorityFeePerGas.toString(16)}`,
@@ -132,6 +164,17 @@ export const getGasValuesFromGelato = async (
       callGasLimit: `0x${sponsoredUserOperation.callGasLimit.toString(16)}`,
       verificationGasLimit: `0x${sponsoredUserOperation.verificationGasLimit.toString(16)}`,
     };
+
+    // Include factory/factoryData only if they exist (for account deployment)
+    if (sponsoredUserOperation.factory && sponsoredUserOperation.factory !== "0x") {
+      userOpForEstimation.factory = sponsoredUserOperation.factory;
+      userOpForEstimation.factoryData = sponsoredUserOperation.factoryData || "0x";
+      console.log("Including factory data for account deployment:");
+      console.log("- Factory:", userOpForEstimation.factory);
+      console.log("- FactoryData:", userOpForEstimation.factoryData);
+    } else {
+      console.log("No factory data - account already deployed");
+    }
   } 
 
   const gasOptions = {
@@ -145,7 +188,10 @@ export const getGasValuesFromGelato = async (
     }),
   }
 
-  console.log('\nSending gas estimation request:', JSON.stringify(userOpForEstimation, null, 2))
+  console.log('\nSending gas estimation request:')
+  console.log('UserOp keys:', Object.keys(userOpForEstimation))
+  console.log('Has factory:', !!userOpForEstimation.factory)
+  console.log('Has factoryData:', !!userOpForEstimation.factoryData)
 
   let responseValues: any
   await fetch(`https://api.gelato.digital//bundlers/${chainID}/rpc?sponsorApiKey=${apiKey}`, gasOptions)
@@ -158,7 +204,7 @@ export const getGasValuesFromGelato = async (
   let rvGas
   if (responseValues && responseValues['result']) {
     rvGas = responseValues['result'] as gasData
-    //console.log('Gas estimation successful:', rvGas)
+    console.log('Gas estimation successful:', rvGas)
   } else {
     console.log('Error or no result from Gelato:', responseValues?.error || responseValues)
   }

@@ -50,8 +50,9 @@ async function main() {
     account,
     calls: [
       {
-        to: "0x....", // Counter contract on Polygon (needs to be deployed)
-        data: "0xd09de08a", // increment() function selector
+        to: account.address, // Send to yourself
+        value: BigInt(0), // 0 ETH
+        data: "0x", // Empty data
       },
     ],
     maxFeePerGas: BigInt(0),
