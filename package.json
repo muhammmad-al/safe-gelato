@@ -1,0 +1,20 @@
+{
+  "name": "safe-gelato-demo",
+  "version": "1.0.0",
+  "description": "Safe smart account demo",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "test": "ts-node src/test.ts",
+    "enables": "ts-node src/enable.ts"
+  },
+  "dependencies": {
+    "ethers": "^6.11.1",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+} 
