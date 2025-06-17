@@ -50,7 +50,7 @@ async function main() {
     account,
     calls: [
       {
-        to: "0xEEeBe2F778AA186e88dCf2FEb8f8231565769C27", // Example contract on Polygon
+        to: "0x...", // Example counter contract on Polygon (needs to be deployed)
         data: "0xd09de08a", // increment() function selector
       },
     ],
