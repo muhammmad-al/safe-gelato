@@ -4,7 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 
 // Permissionless.js imports for Safe Smart Account
 import { toSafeSmartAccount } from 'permissionless/accounts'
-import { sepolia } from 'viem/chains'
+import { polygon } from 'viem/chains'
 import dotenv from 'dotenv'
 
 // Extended UserOperation type to include paymasterAndData
@@ -15,7 +15,7 @@ type UserOperation = ViemUserOperation & {
 dotenv.config();
 
 const entryPointAddress = "0x0000000071727De22E5E9d8BAf0edAc6f37da032"; // entrypoint 0.7 address
-const chainID = 11155111;
+const chainID = 137; // Polygon mainnet chain ID
 const apiKey = process.env.GELATO_API_KEY;
 
 type gasData = {
@@ -34,7 +34,7 @@ async function main() {
   if (!process.env.RPC_URL) throw new Error('Missing RPC_URL in env');
 
   const publicClient = createPublicClient({
-    chain: sepolia,
+    chain: polygon,
     transport: http(process.env.RPC_URL)
   });
 
@@ -59,7 +59,7 @@ async function main() {
     account,
     calls: [
       {
-        to: "0xEEeBe2F778AA186e88dCf2FEb8f8231565769C27", // Counter contract on Sepolia
+        to: "0x...", // Example contract on Polygon
         data: "0xd09de08a", // increment() function selector
       },
     ],

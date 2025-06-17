@@ -56,4 +56,6 @@ pnpm tsx src/sendTxn.ts
 - `@safe-global/safe-core-sdk-types`
 - `@gelatonetwork/relay-sdk`
 - `ethers`
-- `dotenv` 
+- `dotenv`
+- `permissionless`
+- `viem` 
