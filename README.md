@@ -14,8 +14,6 @@ pnpm install
 GELATO_API_KEY=your_gelato_api_key
 PRIVATE_KEY=your_private_key
 RPC_URL=your_rpc_url
-ENTRY_POINT_ADDRESS=0x0000000071727De22E5E9d8BAf0edAc6f37da032
-CHAIN_ID=11155111
 ```
 
 ## Scripts
@@ -37,7 +35,7 @@ pnpm tsx src/sendTxn.ts
 - Safe Smart Account integration
 - Gas estimation for UserOperations
 - Transaction sending through Gelato's bundler service
-- Support for Sepolia testnet (chainId: 11155111)
+- Support for Polygon mainnet (chainId: 137)
 
 ## Project Structure
 
