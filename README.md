@@ -1,6 +1,6 @@
 # Safe Gelato Framework
 
-A framework for interacting with Safe Smart Accounts using Gelato's bundler service.
+A framework for interacting with Safe Smart Accounts using Gelato's bundler service. This project provides scripts for gas estimation and transaction sending with Safe Smart Accounts.
 
 ## Setup
 
@@ -18,13 +18,42 @@ ENTRY_POINT_ADDRESS=0x0000000071727De22E5E9d8BAf0edAc6f37da032
 CHAIN_ID=11155111
 ```
 
-3. Run the script:
+## Scripts
+
+### Gas Estimation
+To estimate gas for a transaction:
 ```bash
-pnpm start
+pnpm tsx src/estimate.ts
+```
+
+### Send Transaction
+To send a transaction using Safe Smart Account:
+```bash
+pnpm tsx src/sendTxn.ts
 ```
 
 ## Features
 
-- Safe Smart Account creation and management
-- UserOperation preparation and gas estimation
-- Integration with Gelato's bundler service 
+- Safe Smart Account integration
+- Gas estimation for UserOperations
+- Transaction sending through Gelato's bundler service
+- Support for Sepolia testnet (chainId: 11155111)
+
+## Project Structure
+
+```
+├── src/
+│   ├── estimate.ts    # Gas estimation script
+│   └── sendTxn.ts     # Transaction sending script
+├── .env              # Environment variables (not tracked in git)
+├── .gitignore       # Git ignore file
+└── package.json     # Project dependencies
+```
+
+## Dependencies
+
+- `@safe-global/protocol-kit`
+- `@safe-global/safe-core-sdk-types`
+- `@gelatonetwork/relay-sdk`
+- `ethers`
+- `dotenv` 
