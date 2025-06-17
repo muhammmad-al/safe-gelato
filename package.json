@@ -1,20 +1,25 @@
 {
-  "name": "safe-gelato-demo",
+  "name": "safe-gelato-framework",
   "version": "1.0.0",
-  "description": "Safe smart account demo",
-  "main": "src/index.ts",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "test": "ts-node src/test.ts",
-    "enables": "ts-node src/enable.ts"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node src/index.ts"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.10.0",
   "dependencies": {
-    "ethers": "^6.11.1",
-    "dotenv": "^16.4.5"
+    "dotenv": "latest",
+    "permissionless": "latest",
+    "viem": "latest"
   },
   "devDependencies": {
-    "@types/node": "^20.11.24",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "@types/node": "latest",
+    "ts-node": "latest",
+    "typescript": "latest"
   }
-} 
+}
