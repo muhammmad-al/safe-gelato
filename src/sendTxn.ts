@@ -15,7 +15,7 @@ type UserOperation = ViemUserOperation & {
 dotenv.config();
 
 const entryPointAddress = "0x0000000071727De22E5E9d8BAf0edAc6f37da032"; // entrypoint 0.7 address
-const chainID = 137; // Polygon mainnet chain ID
+const chainID = 137;
 const apiKey = process.env.GELATO_API_KEY;
 
 async function main() {
@@ -50,7 +50,7 @@ async function main() {
     account,
     calls: [
       {
-        to: "0x...", // Example counter contract on Polygon (needs to be deployed)
+        to: "0x....", // Counter contract on Polygon (needs to be deployed)
         data: "0xd09de08a", // increment() function selector
       },
     ],
@@ -58,47 +58,37 @@ async function main() {
     maxPriorityFeePerGas: BigInt(0),
   });
 
-  let sponsoredUserOperation: UserOperation = {
-    sender: userOperation.sender,
-    nonce: userOperation.nonce,
-    factory: userOperation.factory as `0x${string}`,
-    factoryData: userOperation.factoryData as `0x${string}`,
-    callData: userOperation.callData,
-    callGasLimit: userOperation.callGasLimit,
-    verificationGasLimit: userOperation.verificationGasLimit,
-    preVerificationGas: BigInt(0), // Zero for 1Balance
-    maxFeePerGas: BigInt(0), // Zero for 1Balance
-    maxPriorityFeePerGas: BigInt(0), // Zero for 1Balance
-    signature: userOperation.signature,
-    paymasterAndData: "0x" as `0x${string}`, // Zero for 1Balance
-  };
+  userOperation.preVerificationGas = BigInt(0);
+  userOperation.maxFeePerGas = BigInt(0);
+  userOperation.maxPriorityFeePerGas = BigInt(0);
+  (userOperation as any).paymasterAndData = "0x";
 
-  console.log("Initial UserOperation signature:", sponsoredUserOperation.signature.slice(0, 20) + "...");
+  console.log("Initial UserOperation signature:", userOperation.signature.slice(0, 20) + "...");
 
   // Sign the UserOperation
   console.log("Signing UserOperation...");
-  const signedUserOp = await account.signUserOperation(sponsoredUserOperation);
+  const signedUserOp = await account.signUserOperation(userOperation);
   
   console.log("Signed UserOp result:", signedUserOp);
   console.log("Type of result:", typeof signedUserOp);
   
   // Check if signedUserOp is a string (signature) or object with signature property
   if (typeof signedUserOp === 'string') {
-    sponsoredUserOperation.signature = signedUserOp;
+    userOperation.signature = signedUserOp;
   } else if (signedUserOp && signedUserOp.signature) {
-    sponsoredUserOperation.signature = signedUserOp.signature;
+    userOperation.signature = signedUserOp.signature;
   } else {
     throw new Error('Failed to get signature from signUserOperation');
   }
   
-  console.log("New signature:", sponsoredUserOperation.signature.slice(0, 20) + "...");
-  console.log("Signature length:", sponsoredUserOperation.signature.length);
+  console.log("New signature:", userOperation.signature.slice(0, 20) + "...");
+  console.log("Signature length:", userOperation.signature.length);
 
   // Submit to Gelato
   console.log("Submitting UserOperation to Gelato...");
   const taskId = await sendUserOperationToGelato(
     entryPointAddress,
-    sponsoredUserOperation,
+    userOperation as UserOperation,
     chainID,
     apiKey!
   );

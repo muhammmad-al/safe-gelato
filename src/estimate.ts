@@ -15,7 +15,7 @@ type UserOperation = ViemUserOperation & {
 dotenv.config();
 
 const entryPointAddress = "0x0000000071727De22E5E9d8BAf0edAc6f37da032"; // entrypoint 0.7 address
-const chainID = 137; // Polygon mainnet chain ID
+const chainID = 137;
 const apiKey = process.env.GELATO_API_KEY;
 
 type gasData = {
@@ -59,7 +59,7 @@ async function main() {
     account,
     calls: [
       {
-        to: "0x...", // Example contract on Polygon
+        to: "0xEEeBe2F778AA186e88dCf2FEb8f8231565769C27", // Counter contract on Sepolia
         data: "0xd09de08a", // increment() function selector
       },
     ],
